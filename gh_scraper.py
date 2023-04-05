@@ -1,8 +1,9 @@
 import os
+import sys
 import re
 import json
 from urllib.parse import urlparse
-from utils import open_file, is_github_link, cleanup_link, is_repo_starred, get_repo_url
+from util import open_file, is_github_link, cleanup_link, is_repo_starred, get_repo_url
 
 import praw
 import requests
@@ -12,6 +13,10 @@ reddit_client_id = open_file('keys/reddit_id.txt')
 reddit_client_secret = open_file('keys/reddit_secret.txt')
 github_access_token = open_file('keys/github.txt')
 reddit_user_agent = 'github_scraper'
+
+print('Reddit ID: ' + reddit_client_id)
+print('Reddit Secret: ' + reddit_client_secret)
+print('Github Token: ' + github_access_token)
 
 reddit = praw.Reddit(
     client_id=reddit_client_id,
@@ -23,7 +28,9 @@ reddit = praw.Reddit(
 github = Github(github_access_token)
 
 # Define the subreddit and how many posts to scrape
-subreddit_name = 'chatgpt'
+subreddit_name = 'all'
+if len(sys.argv) > 1:
+    subreddit_name = sys.argv[1]
 num_posts = 100
 
 # Define a regex pattern for GitHub links
@@ -31,7 +38,7 @@ github_pattern = re.compile(r'(https?:\/\/github\.com\/[^\s\)\]]+)')
 
 # Scrape the subreddit
 subreddit = reddit.subreddit(subreddit_name)
-print('Fetching reddit posts')
+print('Fetching reddit posts for r/' + subreddit_name)
 posts = subreddit.new(limit=num_posts)
 
 # Collect GitHub links
@@ -50,7 +57,7 @@ for post in posts:
         url = post.url
         body = post.selftext
 
-    print('\tPost: ' + url)
+    print('\tPost: ' + post.title)
     # Check if the post URL is a GitHub link
     if is_github_link(url):
         gh_url = cleanup_link(url)
